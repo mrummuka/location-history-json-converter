@@ -23,12 +23,15 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 
+
 def main(argv):
     arg_parser = ArgumentParser()
     arg_parser.add_argument("input", help="Input File (JSON)")
     arg_parser.add_argument("-o", "--output", help="Output File (will be overwritten!)")
     arg_parser.add_argument("-f", "--format", choices=["kml", "json", "csv", "js", "gpx", "gpxtracks"], default="kml", help="Format of the output")
     arg_parser.add_argument("-v", "--variable", default="locationJsonData", help="Variable name to be used for js output")
+    arg_parser.add_argument("-s", "--startdate", default=None, help="Start of output data yyyy/mm/dd format")
+    arg_parser.add_argument("-e", "--enddate", default=None, help="End date of output data yyyy/mm/dd format")
     args = arg_parser.parse_args()
     if not args.output: #if the output file is not specified, set to input filename with a diffrent extension
         args.output = '.'.join(args.input.split('.')[:-1]) + '.'+args.format
@@ -47,6 +50,23 @@ def main(argv):
     except:
         print("Error decoding json")
         return
+
+    if not args.startdate or not args.enddate:  # if date range not supplied, start and end set to min and max
+        start_ms = 0
+        end_ms = datetime.now()
+    else:
+        try:
+            start_time = datetime.strptime(args.startdate, "%Y/%m/%d") 
+        except:
+            print("Invalid start date format")
+            return
+        try:
+            end_time = datetime.strptime(args.enddate, "%Y/%m/%d")
+        except:
+            print("Invalid end date format")
+            return
+        start_ms = getTimeMS(start_time)
+        end_ms = getTimeMS(end_time)
 
     if "locations" in data and len(data["locations"]) > 0:
         try:
@@ -198,6 +218,9 @@ def getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2):
 def deg2rad(deg):
     return deg * (math.pi/180)
 
+def getTimeMS(dt):
+    epoch = datetime.utcfromtimestamp(0)
+    return (dt - epoch).total_seconds() * 1000.0
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
