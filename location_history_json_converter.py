@@ -56,17 +56,15 @@ def main(argv):
         end_ms = datetime.now()
     else:
         try:
-            start_time = datetime.strptime(args.startdate, "%Y/%m/%d") 
+            start_ms = int(datetime.strptime(args.startdate, "%Y/%m/%d") .strftime("%s"))*1000
         except:
             print("Invalid start date format")
             return
         try:
-            end_time = datetime.strptime(args.enddate, "%Y/%m/%d")
+            end_ms = int(datetime.strptime(args.enddate, "%Y/%m/%d").strftime("%s"))*1000
         except:
             print("Invalid end date format")
             return
-        start_ms = getTimeMS(start_time)
-        end_ms = getTimeMS(end_time)
 
     if "locations" in data and len(data["locations"]) > 0:
         try:
@@ -87,6 +85,8 @@ def main(argv):
             first = True
 
             for item in items:
+                if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
+                    continue
                 if first:
                     first = False
                 else:
@@ -104,6 +104,8 @@ def main(argv):
         if args.format == "csv":
             f_out.write("Time,Location\n")
             for item in items:
+                if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
+                    continue
                 f_out.write(datetime.fromtimestamp(int(item["timestampMs"]) / 1000).strftime("%Y-%m-%d %H:%M:%S"))
                 f_out.write(",")
                 f_out.write("%s %s\n" % (item["latitudeE7"] / 10000000, item["longitudeE7"] / 10000000))
@@ -114,6 +116,8 @@ def main(argv):
             f_out.write("  <Document>\n")
             f_out.write("    <name>Location History</name>\n")
             for item in items:
+                if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
+                    continue
                 f_out.write("    <Placemark>\n")
                 # Order of these tags is important to make valid KML: TimeStamp, ExtendedData, then Point
                 f_out.write("      <TimeStamp><when>")
@@ -146,6 +150,8 @@ def main(argv):
             f_out.write("  </metadata>\n")
             if args.format == "gpx":
                 for item in items:
+                    if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
+                    continue
                     f_out.write("  <wpt lat=\"%s\" lon=\"%s\">\n"  % (item["latitudeE7"] / 10000000, item["longitudeE7"] / 10000000))
                     if "altitude" in item:
                         f_out.write("    <ele>%d</ele>\n" % item["altitude"])
@@ -169,6 +175,8 @@ def main(argv):
                 # The deltas below assume input is in reverse chronological order.  If it's not, uncomment this:
                 # items = sorted(data["data"]["items"], key=lambda x: x['timestampMs'], reverse=True)
                 for item in items:
+                    if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
+                    continue
                     if lastloc:
                         timedelta = -((int(item['timestampMs']) - int(lastloc['timestampMs'])) / 1000 / 60)
                         distancedelta = getDistanceFromLatLonInKm(item['latitudeE7'] / 10000000, item['longitudeE7'] / 10000000, lastloc['latitudeE7'] / 10000000, lastloc['longitudeE7'] / 10000000)
@@ -177,7 +185,6 @@ def main(argv):
                             f_out.write("    </trkseg>\n")
                             f_out.write("  </trk>\n")
                             f_out.write("  <trk>\n")
-                            f_out.write("    <trkseg>\n")
                     f_out.write("      <trkpt lat=\"%s\" lon=\"%s\">\n" % (item["latitudeE7"] / 10000000, item["longitudeE7"] / 10000000))
                     if "altitude" in item:
                         f_out.write("        <ele>%d</ele>\n" % item["altitude"])
