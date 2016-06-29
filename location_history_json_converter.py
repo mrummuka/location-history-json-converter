@@ -58,12 +58,12 @@ def main(argv):
         try:
             start_ms = int(datetime.strptime(args.startdate, "%Y/%m/%d") .strftime("%s"))*1000
         except:
-            print("Invalid start date format")
+            print("Invalid start date format - expecting yyyy/mm/dd")
             return
         try:
             end_ms = int(datetime.strptime(args.enddate, "%Y/%m/%d").strftime("%s"))*1000
         except:
-            print("Invalid end date format")
+            print("Invalid end date format - expecting yyyy/mm/dd")
             return
 
     if "locations" in data and len(data["locations"]) > 0:
@@ -151,7 +151,7 @@ def main(argv):
             if args.format == "gpx":
                 for item in items:
                     if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
-                    continue
+                    	continue
                     f_out.write("  <wpt lat=\"%s\" lon=\"%s\">\n"  % (item["latitudeE7"] / 10000000, item["longitudeE7"] / 10000000))
                     if "altitude" in item:
                         f_out.write("    <ele>%d</ele>\n" % item["altitude"])
@@ -176,7 +176,7 @@ def main(argv):
                 # items = sorted(data["data"]["items"], key=lambda x: x['timestampMs'], reverse=True)
                 for item in items:
                     if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
-                    continue
+                    	continue
                     if lastloc:
                         timedelta = -((int(item['timestampMs']) - int(lastloc['timestampMs'])) / 1000 / 60)
                         distancedelta = getDistanceFromLatLonInKm(item['latitudeE7'] / 10000000, item['longitudeE7'] / 10000000, lastloc['latitudeE7'] / 10000000, lastloc['longitudeE7'] / 10000000)
