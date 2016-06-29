@@ -32,6 +32,7 @@ def main(argv):
     arg_parser.add_argument("-v", "--variable", default="locationJsonData", help="Variable name to be used for js output")
     arg_parser.add_argument("-s", "--startdate", default=None, help="Start of output data yyyy/mm/dd format")
     arg_parser.add_argument("-e", "--enddate", default=None, help="End date of output data yyyy/mm/dd format")
+    arg_parser.add_argument("-a", "--accuracy", default=None, help="Cutoff (maximum accepted) value for accuracy in output, if accuracy found in input")
     args = arg_parser.parse_args()
     if not args.output: #if the output file is not specified, set to input filename with a diffrent extension
         args.output = '.'.join(args.input.split('.')[:-1]) + '.'+args.format
@@ -65,6 +66,11 @@ def main(argv):
         except:
             print("Invalid end date format - expecting yyyy/mm/dd")
             return
+
+	if not args.accuracy:  # if accuracy filter  not supplied, set to maxvalue
+		accuracy = 99999
+	else:
+		accuracy = args.accuracy
 
     if "locations" in data and len(data["locations"]) > 0:
         try:
@@ -152,6 +158,8 @@ def main(argv):
                 for item in items:
                     if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
                     	continue
+                    if "accuracy" in item and int(item["accuracy"]) > int(accuracy):
+			continue
                     f_out.write("  <wpt lat=\"%s\" lon=\"%s\">\n"  % (item["latitudeE7"] / 10000000, item["longitudeE7"] / 10000000))
                     if "altitude" in item:
                         f_out.write("    <ele>%d</ele>\n" % item["altitude"])
@@ -177,6 +185,8 @@ def main(argv):
                 for item in items:
                     if int(item["timestampMs"]) < start_ms or int(item["timestampMs"]) > end_ms:
                     	continue
+                    if "accuracy" in item and int(item["accuracy"]) > int(accuracy):
+			continue
                     if lastloc:
                         timedelta = -((int(item['timestampMs']) - int(lastloc['timestampMs'])) / 1000 / 60)
                         distancedelta = getDistanceFromLatLonInKm(item['latitudeE7'] / 10000000, item['longitudeE7'] / 10000000, lastloc['latitudeE7'] / 10000000, lastloc['longitudeE7'] / 10000000)
